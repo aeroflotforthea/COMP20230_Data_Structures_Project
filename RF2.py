@@ -211,18 +211,17 @@ def createRoute(key, came_from, cost, description, routes, home, complete_routes
                 # but we need to put a check in place to prevent feedback loops
 
                 # we need to try and return everywhere possible destination
-                smallest = [float('inf'), "", ""]
+                smallest = 0
+                special_key = ""
                 for destination_key in routes[key]:
-                    potential_destination = destination_key[len(key)+1:]
-                    location = description.index(potential_destination)
-                    if location <= smallest[0]:
-                        smallest = [location, destination_key, potential_destination]
-
+                    if routes[key][destination_key] > smallest:
+                        potential_destination = destination_key[len(key)+1:]
+                        special_key = destination_key
                 new_description = description
-                new_description += ":" + smallest[2]
+                new_description += ":" + potential_destination
                 new_cost = cost
-                new_cost += routes[key][smallest[1]]
-                return createRoute(smallest[2], key, new_cost, new_description, routes, home, complete_routes)
+                new_cost += routes[key][special_key]
+                return createRoute(potential_destination, key, new_cost, new_description, routes, home, complete_routes)
 
 
                 # back_key = key + ":" + came_from
