@@ -108,7 +108,7 @@ costs = {
 # Now create a list of scores: 
 
 
-def buildRouteCosts(list_of_airports):
+def buildRouteCosts(list_of_airports, home):
     costs = {}
 
     for airport in list_of_airports: 
@@ -116,11 +116,12 @@ def buildRouteCosts(list_of_airports):
         get_costs_from = possibilities[airport.getName()]
         for key in get_costs_from: 
             costs_key = airport.getName() + ":" + key
-            costs[airport.getName()][costs_key] = Route.calculate_score(airport, possibilities[airport.getName()][key])
-
+            costs[airport.getName()][costs_key] = (Route.calculate_score(airport, possibilities[airport.getName()][key]), Route.calculate_distance(airport, home))
     return costs
 
-route_dictionary = buildRouteCosts(list_of_airports)
+
+route_dictionary = buildRouteCosts(list_of_airports, dublin)
+print(route_dictionary)
 
 # print(route_dictionary)
 # print(route_dictionary)
@@ -166,7 +167,7 @@ def createRoute(key, cost, description):
 '''
 
 
-def createRoute(key, came_from, cost, description, routes, home, complete_routes):
+def createRoute(key, came_from, cost, description, routes, home, complete_routes, banned_routes):
     for complete_route in complete_routes:
         if complete_route == description:
             return
@@ -191,7 +192,7 @@ def createRoute(key, came_from, cost, description, routes, home, complete_routes
                     new_description = description
                     new_description += ":" + home
                     new_cost = cost
-                    new_cost += routes[key][home_key]
+                    new_cost += routes[key][home_key][0]
                     if new_description not in complete_routes:
                         complete_routes[new_description] = new_cost
                     return
@@ -203,25 +204,25 @@ def createRoute(key, came_from, cost, description, routes, home, complete_routes
                             new_description = description
                             new_description += ":" + potential_destination
                             new_cost = cost
-                            new_cost += routes[key][item]
-                            return createRoute(potential_destination, key, new_cost, new_description, routes, home, complete_routes)
+                            new_cost += routes[key][item][0]
+                            return createRoute(potential_destination, key, new_cost, new_description, routes, home, complete_routes, banned_routes)
             if counter == len(routes[key]):
                 
                 # this means we've tried to go everywhere, which means we have to go back to where we came from
                 # but we need to put a check in place to prevent feedback loops
 
                 # we need to try and return everywhere possible destination
-                smallest = 0
-                special_key = ""
+
+                smallest = float('inf')
                 for destination_key in routes[key]:
-                    if routes[key][destination_key] > smallest:
+                    if routes[key][destination_key][1] < smallest:
                         potential_destination = destination_key[len(key)+1:]
                         special_key = destination_key
                 new_description = description
                 new_description += ":" + potential_destination
                 new_cost = cost
-                new_cost += routes[key][special_key]
-                return createRoute(potential_destination, key, new_cost, new_description, routes, home, complete_routes)
+                new_cost += routes[key][special_key][0]
+                return createRoute(potential_destination, key, new_cost, new_description, routes, home, complete_routes, banned_routes)
 
 
                 # back_key = key + ":" + came_from
@@ -241,11 +242,11 @@ def createRoute(key, came_from, cost, description, routes, home, complete_routes
             new_description = description
             new_description += ":" + destination
             new_cost = cost
-            new_cost += routes[key][dict_key]
-            createRoute(destination, key, new_cost, new_description, routes, home, complete_routes)
+            new_cost += routes[key][dict_key][0]
+            createRoute(destination, key, new_cost, new_description, routes, home, complete_routes, banned_routes)
     return complete_routes
 
-print(createRoute('Dublin', 'Dublin', 0, "Dublin", route_dictionary, "Dublin", {}))
+print(createRoute('Dublin', 'Dublin', 0, "Dublin", route_dictionary, "Dublin", {}, []))
 
 '''
 
@@ -277,7 +278,6 @@ London -> Madrid -> Moscow -> Shanghai -> Moscow -> London
 London -> Moscow -> Madrid -> London 
 
 Essentially: If you can return to the root node, do, and finish. 
-
 
 {
     'London:Madrid:Moscow:Paris:Athens:London': 9912.807199356335, 

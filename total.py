@@ -1,48 +1,54 @@
-# ================= IMPORTS =============== #
-from Airport import Airport
-from Route import Route
-from Aircraft import Aircraft
 import math
 
-# ================= IMPORTS =============== #
-
-'''
-
-CLASSES! 
-
-Airport, Aircraft and Route
-
-'''
-
+import pandas as pd
 
 class Airport:
     
-    def __init__(self, name, longitude, latitude, exchange_rate):
+    def __init__(self, name, airport_name, city_name, latitude, longitude, toEuro):
         self.__name = name
+        self.__airport_name = airport_name
+        self.__city_name = city_name
         self.longitude = longitude
         self.latitude = latitude
-        self.__exchange_rate = exchange_rate
+        self.__toEuro = toEuro
+        
+        '''
+        RAPH EDIT - I've switched latitude and longitude round to conform to the airports dictionary
+        
+        '''
+        
+    def getAirportName(self):
+        return self.__airport_name
+    
+    def getCityName(self):
+        return self.__city_name
         
     def getExchangeRate(self):
-        return self.__exchange_rate
+        return self.__toEuro
     
     def getName(self):
         return self.__name
     
-    def setExchangeRate(self, new_exchange_rate):
-        self.__exchange_rate = new_exchange_rate
-        print("Exchange rate set to ", new_exchange_rate)
-        return self.getExchangeRate()
+#     we don't use it
+#     def setExchangeRate(self, new_exchange_rate):
+#         self.__exchange_rate = new_exchange_rate
+#         print("Exchange rate set to ", new_exchange_rate)
+#         return self.getExchangeRate()
 
 
 
 class Aircraft:
-    def __init__(self, code, flight_range, home_airport, units):
+    def __init__(self, code, flight_range, units):
         self.code = code
         self.units = units
         self.flight_range = self.convertToMetric(flight_range)
-        self.home_airport = home_airport
         
+        '''
+        RAPH EDIT!!!! 
+        
+        I've removed home_aiport from the Aircraft object - we don't need it
+        
+        '''
     def convertToMetric(self, flight_range):
         if self.units == "imperial":
             return round(flight_range * 1.60934, 2)
@@ -51,9 +57,9 @@ class Aircraft:
         
     def getRange(self):
         return self.flight_range
-
-
-
+    
+    def getName(self):
+        return self.code
 
 
 
@@ -120,74 +126,83 @@ class Route:
     def getScores(self):
         return self._list_of_scores
 
-'''
-Placeholder plane and airports:
-'''
 
-plane = Aircraft("737", 5600, "LHR", "imperial")
+df_aircraft = pd.read_csv("aircraft.csv")
 
-madrid = Airport("Madrid", 3.7038, 40.4168, 0.84)
-london = Airport("London", 0.1278, 51.5074, 1.17)
-moscow = Airport("Moscow", 37.618423, 55.7558, 0.5)
-shanghai = Airport("Shanghai", 121.4737, 31.2304, 0.4) 
-paris = Airport("Paris", 2.3522 , 48.864716, 1)
-hk = Airport("Hong Kong", 114.149139, 22.286394, 0.3)
-athens = Airport("Athens", 23.727539, 37.983810, 1)
-la = Airport("Los Angeles", -118.243683, 34.052235, 1.5)
-hawaii = Airport("Honolulu", -157.917480, 21.289373, 1.5)
-NYC = Airport("New York", -73.935242, 40.730610, 1.5)
-dublin = Airport("Dublin", -6.266155, 53.350140, 1)
+# turn all aircrafts into dictionary - key is aircraft code
+aircraft_dict = df_aircraft.set_index('code').T.to_dict('list')
 
 
-
-'''
-First cost calculates the cost of the first possible route
-'''
-
-def firstcost(graph, start, flightlist, path =[],a=0, cost=0): 
-    path = path + [start]
-    cost+=a
-    if len(path)==len(flightlist) and home in graph[start]:
-        path.append(home)
-        cost += getcost(start, home, costgraph)
-        return path, cost
-    for node in graph[start]: 
-        if node not in path: 
-            a = getcost(start, node, costgraph)
-            newpath = firstcost(graph, node, flightlist, path,a, cost) 
-            if newpath:  
-                return newpath 
-    return None
+# WORKS
 
 
-'''
-myDFS generates all possible routes, and cuts if they're more expensive than first cost
-
-'''
-
-def myDFS(graph,start,cost,flightlist, bestcost, path=[],a=0): 
-    path=path+[start] 
-#     print("path is", path)
-    cost+=a
-    if len(path)==len(flightlist) and home in graph[start]:
-#         print("last cost is", cost)
-        path.append(home)
-        cost += getcost(start, home, costgraph)
-        paths[cost]=path
-    for node in childrenOf(start):
-        a = getcost(start, node, costgraph)
-        if node not in path and cost+a<bestcost:
-#             print("node is", node)
-            myDFS(graph,node,cost,flightlist, bestcost,path,a)
+# # 
+aircraftList =[]
+for key in aircraft_dict.keys():
+    aircraftList.append(key)
 
 
-'''
+# WORKS
 
-build_dict_as_dictionaries creates a graph, where each node contains the airports it can travel to
 
-'''
 
-def build_dict_as_dictionaries(list_of_airports, possibilities_lookup, plane):
+aircraftObjects = {} # this is the thislist
+for aircraft in aircraftList:
+    myobject = Aircraft((aircraft_dict[aircraft])[0], (aircraft_dict[aircraft])[4], (aircraft_dict[aircraft])[2])
+    aircraftObjects[aircraft]=myobject
+    
+    
+
+
+# WORKS
+# '''
+# RAPH EDIT - the aircraft object looks like this: Aircraft(code, flight range, units)
+# '''
+
+
+df_airportcurr = pd.read_csv("airportcurrency.csv")
+
+
+airportcurr_dict = df_airportcurr.set_index('airportcode').T.to_dict('list')
+
+
+airportList = []
+for key in airportcurr_dict.keys():
+    airportList.append(key)
+    
+airportObjects = {}
+for airport in airportList:
+    myobject = Airport((airportcurr_dict[airport])[0], (airportcurr_dict[airport])[1], (airportcurr_dict[airport])[2], (airportcurr_dict[airport])[4], (airportcurr_dict[airport])[5], (airportcurr_dict[airport])[7])
+    airportObjects[airport]=myobject
+    
+
+# '''
+# RAPH EDIT - The aiport object looks like this:
+# Airport(name, airportname, cityname, longitude, latitude, toEuro)
+# '''
+
+
+
+
+
+list_of_airports = ['LHR', 'JFK', 'SVO', 'SXF','XDB']
+list_of_airport_dict = {}
+
+# list_airports_just = [airportObjects[x] for x in list_of_airports]
+example_airports_list = [airportObjects[x] for x in list_of_airports]
+
+# '''
+# RAPH EDIT!!
+
+# I'm renaming 'list_airports_just' to 'example_airports_list'
+# '''
+
+for i in list_of_airports:
+    list_of_airport_dict[i] = airportObjects[i]
+
+
+
+def build_flight_possibilities(list_of_airports, possibilities_lookup, plane):
     for i in range(len(list_of_airports)):
         possibilities_lookup[list_of_airports[i].getName()] = {}
         for j in range(len(list_of_airports)):
@@ -196,163 +211,211 @@ def build_dict_as_dictionaries(list_of_airports, possibilities_lookup, plane):
 
     return possibilities_lookup
 
+# possibilities = build_flight_possibilities(example_airports_list, {}, aircraftObjects['747'])
 
-'''
-dummy list of airports
-'''
-list_of_airports = [paris, dublin, london, NYC, hk, hawaii, shanghai]
-
-'''
-possibilities is an example graph
-'''
-
-possibilities = build_dict_as_dictionaries(list_of_airports, {}, plane)
-
-# print(possibilities)
-'''
-
-buildRouteCosts actually creates a dictionary with all possible destinations and equivalent scores for anywhere that it can go.
-
-'''
-
-
-def buildRouteCosts(list_of_airports):
+def buildRouteCosts(list_of_airports, potential_routes):
+    
+    '''
+    RAPH EDIT!!!
+    
+    I'm making buildRouteCosts take possibilities (potential_routes) as a parameter
+    '''
     costs = {}
 
     for airport in list_of_airports: 
         costs[airport.getName()] = {}
-        get_costs_from = possibilities[airport.getName()]
+        get_costs_from = potential_routes[airport.getName()]
         for key in get_costs_from: 
             costs_key = airport.getName() + ":" + key
-            costs[airport.getName()][costs_key] = Route.calculate_score(airport, possibilities[airport.getName()][key])
+            costs[airport.getName()][costs_key] = Route.calculate_score(airport, potential_routes[airport.getName()][key])
 
     return costs
 
-route_dictionary = buildRouteCosts(list_of_airports)
-# print(route_dictionary)
+# routes = buildRouteCosts(example_airports_list, possibilities)
 
-'''
-{
-    'Paris': 
-        {
-            'Paris:Dublin': 780.0759054937671, 'Paris:London': 333.5502847177977, 'Paris:New York': 5826.998279614931
-        }, 
-    'Dublin': 
-        {
-            'Dublin:Paris': 780.0759054937671, 'Dublin:London': 478.94735797307936, 'Dublin:New York': 5105.20687270428
-        }, 
-    'London': 
-        {
-            'London:Paris': 390.2538331198233, 'London:Dublin': 560.3684088285028, 'London:New York': 6525.510531597366
-        }, 
-    'New York': 
-        {
-            'New York:Paris': 8740.497419422396, 'New York:Dublin': 7657.81030905642, 'New York:London': 8366.039143073547, 'New York:Honolulu': 11981.72070267967
-        }, 
-    'Hong Kong': 
-        {
-            'Hong Kong:Honolulu': 2676.311457346746, 'Hong Kong:Shanghai': 369.11887089279065
-        }, 
-    'Honolulu': 
-        {
-            'Honolulu:New York': 11981.72070267967, 'Honolulu:Hong Kong': 13381.557286733729, 'Honolulu:Shanghai': 11908.038132162477
-        }, 
-    'Shanghai': 
-        {
-            'Shanghai:Hong Kong': 492.1584945237209, 'Shanghai:Honolulu': 3175.4768352433275
-        }
-}
-
-
-'''
-
-
-'''
-
-RAPH'S CREATE ROUTE ALGORITHM
-
-
-'''
-
-
-def createRoute(key, came_from, cost, description, routes, home, complete_routes):
-    for complete_route in complete_routes:
-        if complete_route == description:
-            return
-    full_description = True
-    for item in routes:
-        if item not in description:
-            full_description = False
-            break
-    
-    counter = 0
-    for dict_key in routes[key]:
-        destination = dict_key[len(key)+1:]
-        if destination in description:
-            # this bit needs to change. We need to go through the routes and find the one that is closest to the home
-            counter += 1
-                
-            if full_description: 
-                # if we reach this point, it means that we've been everywhere 
-                # firstly, check if we can go home:
-                home_key = key + ":" + home
-                if home_key in routes[key]:
-                    new_description = description
-                    new_description += ":" + home
-                    new_cost = cost
-                    new_cost += routes[key][home_key]
-                    if new_description not in complete_routes:
-                        complete_routes[new_description] = new_cost
-                    return
+def build_route_string(list_of_airports, string_route_lookup, plane):
+    for i in range(len(list_of_airports)):
+        string_route_lookup[list_of_airports[i].getName()] = []
+        for j in range(len(list_of_airports)):
+            if i != j and Route.calculate_distance(list_of_airports[i], list_of_airports[j]) <= plane.getRange():
+                if list_of_airports[i].getName() in string_route_lookup:
+                    string_route_lookup[list_of_airports[i].getName()].append(list_of_airports[j].getName())
                 else:
-                    for item in routes[key]:
-                        potential_destination = item[len(key)+1:]
-                        home_key = potential_destination + ":" + home
-                        if home_key in routes[potential_destination]:
-                            new_description = description
-                            new_description += ":" + potential_destination
-                            new_cost = cost
-                            new_cost += routes[key][item]
-                            return createRoute(potential_destination, key, new_cost, new_description, routes, home, complete_routes)
-            if counter == len(routes[key]):
-                
-                # this means we've tried to go everywhere, which means we have to go back to where we came from
-                # but we need to put a check in place to prevent feedback loops
+                    string_route_lookup[list_of_airports[i].getName()]=list_of_airports[j].getName()
 
-                # we need to try and return everywhere possible destination
-                smallest = [float('inf'), "", ""]
-                for destination_key in routes[key]:
-                    potential_destination = destination_key[len(key)+1:]
-                    location = description.index(potential_destination)
-                    if location <= smallest[0]:
-                        smallest = [location, destination_key, potential_destination]
+    return string_route_lookup
 
-                new_description = description
-                new_description += ":" + smallest[2]
-                new_cost = cost
-                new_cost += routes[key][smallest[1]]
-                return createRoute(smallest[2], key, new_cost, new_description, routes, home, complete_routes)
+# mygraph=build_route_string(example_airports_list, {}, aircraftObjects['747'])
+
+# home = "LHR"
+def firstcost(home, graph, start, flightlist, routes, path =[],a=0, cost=0): 
+    path = path + [start]
+    cost+=a
+    if len(path)==len(flightlist) and home in graph[start]:
+        path.append(home)
+        start_string = start +":" + home
+        a = routes[start][start_string]
+        cost += a
+        return path, cost
+    for node in graph[start]: 
+        if node not in path: 
+            start_string = start +":" + node
+            a = routes[start][start_string]
+            newpath = firstcost(home, graph, node, flightlist, routes,path,a, cost) 
+            if newpath:  
+                return newpath 
+    return path, "Error: Aircraft is too small to successfully traverse flightplan"
+
+# firstroute, boundcost = firstcost(mygraph, home, list_of_airports, routes)
 
 
-                # back_key = key + ":" + came_from
-                # banned_key = came_from + ":" + key
-                # if back_key in banned_routes:
-                #     continue
-                # else:
-                #     banned_routes.append(banned_key)
-                # new_description = description
-                # new_description += ":" + came_from
-                # new_cost = cost
-                # new_cost += routes[key][back_key]
-                # return createRoute(came_from, key, new_cost, new_description, routes, home, complete_routes, banned_routes)
-            else: 
-                continue
+def myDFS(home, graph, start, cost, flightlist, routes, boundcost, paths, path=[],a=0): 
+    path=path+[start] 
+#     print("path is", path)
+    cost+=a
+    if len(path)==len(flightlist) and home in graph[start]:
+#         print("last cost is", cost)
+        path.append(home)
+        start_string = start +":" + home
+        a = routes[start][start_string]
+        cost += a        
+        paths[cost]=path
+    for node in graph[start]:
+        start_string = start +":" + node
+        a = routes[start][start_string]
+        if node not in path and cost+a<boundcost:
+#             print("node is", node)
+            myDFS(home, graph,node,cost,flightlist,routes,boundcost,paths, path, a)
+    return paths
+
+# special_paths = myDFS(mygraph, home,0, list_of_airports, routes, boundcost, {})
+
+
+
+
+def partitioner(items_to_sort, first_item, last_item):
+    
+    pivot = items_to_sort[first_item]
+    left_point = first_item + 1
+    right_point = last_item
+
+    done = False
+    while not done:
+
+        while left_point <= right_point and items_to_sort[left_point] <= pivot:
+            # if the item on the left is smaller than the pivot, move the left_point across (i.e ignore it)
+               left_point = left_point + 1
+
+                    
+        while items_to_sort[right_point] >= pivot and right_point >= left_point:
+               right_point = right_point -1
+            # likewise, if the point on the right is bigger than the pivot, just close the right in towards the middle
+
+        if right_point < left_point:
+               done = True
         else:
-            new_description = description
-            new_description += ":" + destination
-            new_cost = cost
-            new_cost += routes[key][dict_key]
-            createRoute(destination, key, new_cost, new_description, routes, home, complete_routes)
-    return complete_routes
+            # switch them round
+            temp_store = items_to_sort[left_point]
+            items_to_sort[left_point] = items_to_sort[right_point]
+            items_to_sort[right_point] = temp_store
 
-print(createRoute('Dublin', 'Dublin', 0, "Dublin", route_dictionary, "Dublin", {}))
+    temp_store = items_to_sort[first_item]
+    items_to_sort[first_item] = items_to_sort[right_point]
+    items_to_sort[right_point] = temp_store
+
+
+    return right_point
+        
+        
+def actual_quick_sort(items_to_sort, first_item, last_item):
+        if first_item < last_item:
+            # this is our base case - once the first_item is the same as the last_item the recursion will stop.
+            
+            divider = partitioner(items_to_sort, first_item, last_item)
+            
+            actual_quick_sort(items_to_sort,first_item,divider-1)
+            actual_quick_sort(items_to_sort,divider+1,last_item)
+            
+            
+def sortMe(items_to_sort):
+    actual_quick_sort(items_to_sort, 0, len(items_to_sort)-1)
+    return items_to_sort
+    
+
+# paths = special_paths
+# path_list = [key for key in paths]
+
+
+# best_route = sortMe(path_list)[0]
+# print("The cheapest route to take is ", paths[best_route], " and it costs ", best_route)
+
+
+def BuildRoute():
+    home_query = input("Please enter the code of your designated 'home' airport: ")
+    print("Home has been set as: ", home_query, " - ", airportObjects[home_query].getAirportName(), " in ", airportObjects[home_query].getCityName())
+    list_of_airports_query = "" 
+    list_of_airports = []
+    print("Please enter the codes of every airport you would like to travel to, not including ", home_query, ". Please type 'done' when you have finished entering destinations.")
+    while list_of_airports_query != "done":
+        list_of_airports_query = input("Enter the code of an airport:")
+        if list_of_airports_query == "done":
+            break
+        if list_of_airports_query not in airportcurr_dict:
+            print("That airport wasn't found.")
+        else:
+            list_of_airports.append(list_of_airports_query)
+            print("airport successfully added.")
+            print(list_of_airports)
+    
+    list_of_airports.append(home_query)
+    print("The list of destinations you have entered is: ", list_of_airports, "with ", home_query, " as the start point.")
+    plane_code = input("Please enter the code of the aircraft you would like to use.")
+    
+    dictionary_of_airports = {}
+
+    # list_airports_just = [airportObjects[x] for x in list_of_airports]
+    list_of_airport_objects = [airportObjects[x] for x in list_of_airports]
+
+    '''
+    RAPH EDIT!!
+
+    I'm renaming 'list_airports_just' to 'example_airports_list'
+    '''
+
+    for i in list_of_airports:
+        dictionary_of_airports[i] = airportObjects[i]
+
+#     print(dictionary_of_airports)
+#     print(list_of_airport_objects)
+    
+    plane = aircraftObjects[plane_code]
+#     print(plane.getName())
+    
+    possibilities = build_flight_possibilities(list_of_airport_objects, {}, plane)
+    
+#     print("The flight graph looks like: ", possibilities)
+    for key in possibilities: 
+        if len(possibilities[key]) == 0:
+            print("This is an invalid route for this aircraft. The aircraft's maximum range is too small to travel to one of the chosen destinations")
+            return
+        
+    routes = buildRouteCosts(list_of_airport_objects, possibilities)
+    mygraph= build_route_string(list_of_airport_objects, {}, plane)
+    print(mygraph)
+    print(routes)
+    firstroute, boundcost = firstcost(home_query, mygraph, home_query, list_of_airports, routes)
+    print(firstroute, boundcost)
+    
+    paths = myDFS(home_query, mygraph, home_query, 0, list_of_airports, routes, boundcost, {})
+    
+    path_list = [key for key in paths]
+
+    best_route = sortMe(path_list)[0]
+    
+    print("The cheapest route to take is ", paths[best_route], " and it costs ", best_route)
+    
+   
+BuildRoute()
+
+    
+    
